@@ -4,7 +4,7 @@ public class Main {
             if (args.length != 2) {
                 System.exit(1);
             } else {
-                String temp[] = new String[] {args[1], "idf_output" };
+                String temp[] = new String[] {args[1], "idf_output", "tf_idf_output" };
                 Indexer.main(temp);
             }
         }  else {
