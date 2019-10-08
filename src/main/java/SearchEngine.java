@@ -11,7 +11,6 @@ import main.java.Query.RelevanceMapper;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Scanner;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
@@ -48,10 +47,13 @@ public class SearchEngine extends Configured implements Tool {
                 if (!isCompleted) {
                     return 1;
                 }
-            } else if (args[0].equals("Query")) { // Query task
-                System.out.print("Enter your query here: ");
-                Scanner in = new Scanner(System.in);
-                String query = in.nextLine().trim();
+            } else if (args[0].equals("Query") && args.length > 2){ // Query task
+                try {
+                    Integer count = Integer.parseInt(args[1]);
+                } catch (NumberFormatException e) {
+                    return 1;
+                }
+                String query = args[2];
                 HashMap<String, Integer> words = countFreqsInQuery(query);
                 String wordsString = hashMapToString(words);
                 boolean isCompleted = runQueryTfIdf(wordsString, "idf_output", "words_tf_idf_output");
@@ -74,6 +76,11 @@ public class SearchEngine extends Configured implements Tool {
     public boolean runIdf(String inputFolder, String idfOutput) throws
             IOException, InterruptedException, ClassNotFoundException {
         Configuration conf = new Configuration();
+        FileSystem fs = FileSystem.get(conf);
+        Path outputPath = new Path(idfOutput);
+        if (fs.exists(outputPath)) {
+            fs.delete(outputPath, true);
+        }
         conf.set("idf_output", idfOutput);
 
         //create IDF counting job
@@ -98,6 +105,11 @@ public class SearchEngine extends Configured implements Tool {
     public boolean runTfIdf(String inputFolder, String tfIdfOutput, String idfOutput) throws
             IOException, ClassNotFoundException, InterruptedException {
         Configuration conf = new Configuration();
+        FileSystem fs = FileSystem.get(conf);
+        Path outputPath = new Path(tfIdfOutput);
+        if (fs.exists(outputPath)) {
+            fs.delete(outputPath, true);
+        }
         conf.set("tf_idf_output", tfIdfOutput);
         conf.set("idf_output", idfOutput);
 
@@ -122,7 +134,11 @@ public class SearchEngine extends Configured implements Tool {
             IOException, InterruptedException, ClassNotFoundException {
         Configuration conf = new Configuration();
         conf.set("query", wordsInQuery);
-
+        FileSystem fs = FileSystem.get(conf);
+        Path outputPath = new Path(output);
+        if (fs.exists(outputPath)) {
+            fs.delete(outputPath, true);
+        }
         Job job = Job.getInstance(conf, "Words TF/IDF");
 
         job.setJarByClass(SearchEngine.class);
@@ -176,7 +192,6 @@ public class SearchEngine extends Configured implements Tool {
         }
 
         return wordCounter;
-
     }
 
     private String hashMapToString(HashMap<String, Integer> words) {
