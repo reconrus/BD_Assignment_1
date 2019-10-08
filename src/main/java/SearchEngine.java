@@ -6,13 +6,13 @@ import main.java.Indexer.TfIdfMapper;
 
 import main.java.Query.QueryTfIdfMapper;
 import main.java.Query.QueryTfIdfReducer;
+import main.java.Query.RelevanceMapper;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Scanner;
 
-import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
 import org.apache.hadoop.io.DoubleWritable;
@@ -20,14 +20,11 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 
 
@@ -58,6 +55,10 @@ public class SearchEngine extends Configured implements Tool {
                 HashMap<String, Integer> words = countFreqsInQuery(query);
                 String wordsString = hashMapToString(words);
                 boolean isCompleted = runQueryTfIdf(wordsString, "idf_output", "words_tf_idf_output");
+                if (!isCompleted) {
+                    return 1;
+                }
+                isCompleted = runRelevance("words_tf_idf_output", "tf_idf_output", "docs_ratings");
                 if (!isCompleted) {
                     return 1;
                 }
@@ -132,6 +133,28 @@ public class SearchEngine extends Configured implements Tool {
         job.setOutputValueClass(IntWritable.class);
 
         FileInputFormat.addInputPath(job, new Path(idfInput));
+        FileOutputFormat.setOutputPath(job, new Path(output));
+
+        return job.waitForCompletion(true);
+
+    }
+
+    public boolean runRelevance(String words_coeff, String tfIdfInput, String output) throws IOException, ClassNotFoundException, InterruptedException {
+        Configuration conf = new Configuration();
+
+        Job job = Job.getInstance(conf, "Relevance");
+
+        job.addCacheFile(new Path(words_coeff).toUri());
+
+        job.setJarByClass(SearchEngine.class);
+        job.setMapperClass(RelevanceMapper.class);
+        job.setNumReduceTasks(100);
+
+
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(DoubleWritable.class);
+
+        FileInputFormat.addInputPath(job, new Path(tfIdfInput));
         FileOutputFormat.setOutputPath(job, new Path(output));
 
         return job.waitForCompletion(true);
