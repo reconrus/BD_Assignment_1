@@ -166,8 +166,8 @@ public class SearchEngine extends Configured implements Tool {
         job.setJarByClass(SearchEngine.class);
         job.setMapperClass(RelevanceMapper.class);
 
-        job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(DoubleWritable.class);
+        job.setOutputKeyClass(DoubleWritable.class);
+        job.setOutputValueClass(Text.class);
 
         FileInputFormat.addInputPath(job, new Path(tfIdfInput));
         FileOutputFormat.setOutputPath(job, new Path(output));
