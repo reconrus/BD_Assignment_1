@@ -35,6 +35,17 @@ public class SearchEngine extends Configured implements Tool {
         System.exit(ToolRunner.run(new Configuration(), new SearchEngine(), args));
     }
 
+    public void deleteTemporalFolders(String[] folders) throws IOException {
+        Configuration conf = new Configuration();
+        FileSystem fs = FileSystem.get(conf);
+        for(String folder: folders){
+            Path outputPath = new Path(folder);
+            if (fs.exists(outputPath)) {
+                fs.delete(outputPath, true);
+            }
+        }
+    }
+
     @Override
     public int run(String[] args) throws Exception {
         if (args.length == 0)
@@ -47,10 +58,14 @@ public class SearchEngine extends Configured implements Tool {
         if (taskName.equals("Indexer")) { // Indexing task
             boolean isCompleted = runIdf(args[1], "idf_output");
             if (!isCompleted) {
+                String[] temporalFolders = {"idf_output"};
+                deleteTemporalFolders(temporalFolders);
                 return 1;
             }
             isCompleted = runTfIdf(args[1], "tf_idf_output", "idf_output");
             if (!isCompleted) {
+                String[] temporalFolders = {"idf_output", "tf_idf_output"};
+                deleteTemporalFolders(temporalFolders);
                 return 1;
             }
         } else if (taskName.equals("Query") && args.length > 2){ // Query task
@@ -65,12 +80,18 @@ public class SearchEngine extends Configured implements Tool {
             String wordsString = hashMapToString(words);
             boolean isCompleted = runQueryTfIdf(wordsString, "idf_output", "words_tf_idf_output");
             if (!isCompleted) {
+                String[] temporalFolders = {"words_tf_idf_output"};
+                deleteTemporalFolders(temporalFolders);
                 return 1;
             }
             isCompleted = runRelevance("words_tf_idf_output", "tf_idf_output", "docs_ratings", count);
             if (!isCompleted) {
+                String[] temporalFolders = {"words_tf_idf_output", "docs_ratings"};
+                deleteTemporalFolders(temporalFolders);
                 return 1;
             }
+            String[] temporalFolders = {"words_tf_idf_output"};
+            deleteTemporalFolders(temporalFolders);
         }
         return 0;
     }
