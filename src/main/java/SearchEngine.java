@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
 import org.apache.hadoop.io.DoubleWritable;
@@ -30,14 +31,15 @@ import org.apache.hadoop.conf.Configured;
 
 
 public class SearchEngine extends Configured implements Tool {
+    private static FileSystem fs;
 
     public static void main(String[] args) throws Exception {
+        Configuration conf = new Configuration();
+        fs = FileSystem.get(conf);
         System.exit(ToolRunner.run(new Configuration(), new SearchEngine(), args));
     }
 
-    public void deleteTemporalFolders(String[] folders) throws IOException {
-        Configuration conf = new Configuration();
-        FileSystem fs = FileSystem.get(conf);
+    public void deleteFolders(String[] folders) throws IOException {
         for(String folder: folders){
             Path outputPath = new Path(folder);
             if (fs.exists(outputPath)) {
@@ -59,13 +61,13 @@ public class SearchEngine extends Configured implements Tool {
             boolean isCompleted = runIdf(args[1], "idf_output");
             if (!isCompleted) {
                 String[] temporalFolders = {"idf_output"};
-                deleteTemporalFolders(temporalFolders);
+                deleteFolders(temporalFolders);
                 return 1;
             }
             isCompleted = runTfIdf(args[1], "tf_idf_output", "idf_output");
             if (!isCompleted) {
                 String[] temporalFolders = {"idf_output", "tf_idf_output"};
-                deleteTemporalFolders(temporalFolders);
+                deleteFolders(temporalFolders);
                 return 1;
             }
         } else if (taskName.equals("Query") && args.length > 2){ // Query task
@@ -81,17 +83,23 @@ public class SearchEngine extends Configured implements Tool {
             boolean isCompleted = runQueryTfIdf(wordsString, "idf_output", "words_tf_idf_output");
             if (!isCompleted) {
                 String[] temporalFolders = {"words_tf_idf_output"};
-                deleteTemporalFolders(temporalFolders);
+                deleteFolders(temporalFolders);
                 return 1;
             }
             isCompleted = runRelevance("words_tf_idf_output", "tf_idf_output", "docs_ratings", count);
             if (!isCompleted) {
                 String[] temporalFolders = {"words_tf_idf_output", "docs_ratings"};
-                deleteTemporalFolders(temporalFolders);
+                deleteFolders(temporalFolders);
                 return 1;
             }
             String[] temporalFolders = {"words_tf_idf_output"};
-            deleteTemporalFolders(temporalFolders);
+            deleteFolders(temporalFolders);
+            Path outputFile = new Path("docs_ratings/part-r-00000");
+            FSDataInputStream inputStream = fs.open(outputFile);
+            String out = IOUtils.toString(inputStream, "UTF-8");
+            System.out.println(out);
+            inputStream.close();
+            fs.close();
         }
         return 0;
     }
@@ -99,11 +107,8 @@ public class SearchEngine extends Configured implements Tool {
     public boolean runIdf(String inputFolder, String idfOutput) throws
             IOException, InterruptedException, ClassNotFoundException {
         Configuration conf = new Configuration();
-        FileSystem fs = FileSystem.get(conf);
-        Path outputPath = new Path(idfOutput);
-        if (fs.exists(outputPath)) {
-            fs.delete(outputPath, true);
-        }
+        String[] folder = {idfOutput};
+        deleteFolders(folder);
         conf.set("idf_output", idfOutput);
 
         //create IDF counting job
@@ -128,11 +133,8 @@ public class SearchEngine extends Configured implements Tool {
     public boolean runTfIdf(String inputFolder, String tfIdfOutput, String idfOutput) throws
             IOException, ClassNotFoundException, InterruptedException {
         Configuration conf = new Configuration();
-        FileSystem fs = FileSystem.get(conf);
-        Path outputPath = new Path(tfIdfOutput);
-        if (fs.exists(outputPath)) {
-            fs.delete(outputPath, true);
-        }
+        String[] folder = {tfIdfOutput};
+        deleteFolders(folder);
         conf.set("tf_idf_output", tfIdfOutput);
         conf.set("idf_output", idfOutput);
 
@@ -156,12 +158,9 @@ public class SearchEngine extends Configured implements Tool {
     public boolean runQueryTfIdf(String wordsInQuery, String idfInput, String output) throws
             IOException, InterruptedException, ClassNotFoundException {
         Configuration conf = new Configuration();
+        String[] folder = {output};
+        deleteFolders(folder);
         conf.set("query", wordsInQuery);
-        FileSystem fs = FileSystem.get(conf);
-        Path outputPath = new Path(output);
-        if (fs.exists(outputPath)) {
-            fs.delete(outputPath, true);
-        }
         Job job = Job.getInstance(conf, "Words TF/IDF");
 
         job.setJarByClass(SearchEngine.class);
@@ -180,11 +179,8 @@ public class SearchEngine extends Configured implements Tool {
 
     public boolean runRelevance(String wordsCoeff, String tfIdfInput, String output, Integer count) throws IOException, ClassNotFoundException, InterruptedException {
         Configuration conf = new Configuration();
-        FileSystem fs = FileSystem.get(conf);
-        Path outputPath = new Path(output);
-        if (fs.exists(outputPath)) {
-            fs.delete(outputPath, true);
-        }
+        String[] folder = {output};
+        deleteFolders(folder);
         conf.set("query_tf_idf", wordsCoeff);
         conf.set("count", count.toString());
 

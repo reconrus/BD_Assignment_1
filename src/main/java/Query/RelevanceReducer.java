@@ -30,7 +30,6 @@ public class RelevanceReducer extends Reducer<DoubleWritable, Text, Text, Double
             if (count == 0){
                 break;
             }
-            System.out.println("Title: " + val + " Rank: " + distance.toString());
             context.write(val, new DoubleWritable(distance));
             count--;
         }
