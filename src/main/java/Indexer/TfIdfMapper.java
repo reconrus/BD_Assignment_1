@@ -86,7 +86,7 @@ public class TfIdfMapper extends Mapper<Object, Text, Text, MapWritable> {
                 Integer idf = wordsIdf.get(word);
                 tfIdf.put(new Text(word), new DoubleWritable(1D * tf / (idf * idf)));
             }
-            context.write(new Text(document.getId()), tfIdf);
+            context.write(new Text(document.getTitle()), tfIdf);
             wordsCount.clear();
         }
     }
