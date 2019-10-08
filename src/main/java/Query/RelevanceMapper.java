@@ -2,6 +2,7 @@ package main.java.Query;
 
 import java.io.*;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -40,7 +41,7 @@ public class RelevanceMapper extends Mapper<Object, Text, DoubleWritable, Text> 
     }
 
     private HashMap<String, Double> wordsInQuery(Configuration conf) throws IOException {
-        FileSystem fileSystem = FileSystem.getLocal(conf);
+        FileSystem fileSystem = FileSystem.get( conf);
         String query = conf.get("query_tf_idf");
 
         RemoteIterator<LocatedFileStatus> fileStatusListIterator = fileSystem.listFiles(

@@ -1,6 +1,7 @@
 package main.java.Indexer;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -31,7 +32,7 @@ public class TfIdfMapper extends Mapper<Object, Text, Text, MapWritable> {
             String idf_output = conf.get("idf_output");
             //Open file systemimport main.java.Indexer.Document;
 
-            FileSystem fileSystem = FileSystem.getLocal(conf);
+            FileSystem fileSystem = FileSystem.get(conf);
             //iterator for files
             RemoteIterator<LocatedFileStatus> fileStatusListIterator = fileSystem.listFiles(
                     new Path(idf_output), true);
