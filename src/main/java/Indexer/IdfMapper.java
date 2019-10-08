@@ -33,15 +33,15 @@ public class IdfMapper
                     .split("([ \n\t\r'\"!@#$%^&*()_\\-+={}\\[\\]|<>;:,./`~]|\\n)+");
             //for each word
             for (String word : words) {
-                boolean bad = false;
+                boolean isBad = false;
                 //check if word consists of letters
                 for (Character ch : word.toCharArray()) {
                     if (!(ch >= 'a' && ch <= 'z')) {
-                        bad = true;
+                        isBad = true;
                         break;
                     }
                 }
-                if (bad) continue;
+                if (isBad) continue;
                 //if word does not exist, add it to hash map
                 if (!wordExists.containsKey(word)) {
                     wordExists.put(word, true);
