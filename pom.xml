@@ -13,7 +13,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>11</java.version>
-        <exec.mainClass>Main</exec.mainClass>
+        <exec.mainClass>main.java.SearchEngine</exec.mainClass>
     </properties>
 
     <!-- https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-common -->
