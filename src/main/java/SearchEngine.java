@@ -33,12 +33,6 @@ import org.apache.hadoop.conf.Configured;
 public class SearchEngine extends Configured implements Tool {
     private static FileSystem fs;
 
-    public static void main(String[] args) throws Exception {
-        Configuration conf = new Configuration();
-        fs = FileSystem.get(conf);
-        System.exit(ToolRunner.run(new Configuration(), new SearchEngine(), args));
-    }
-
     public void deleteFolders(String[] folders) throws IOException {
         for(String folder: folders){
             Path outputPath = new Path(folder);
@@ -229,6 +223,12 @@ public class SearchEngine extends Configured implements Tool {
 
         return result.toString().trim();
 
+    }
+    
+    public static void main(String[] args) throws Exception {
+        Configuration conf = new Configuration();
+        fs = FileSystem.get(conf);
+        System.exit(ToolRunner.run(new Configuration(), new SearchEngine(), args));
     }
 
 }
