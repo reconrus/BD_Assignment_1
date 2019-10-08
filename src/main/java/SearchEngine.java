@@ -36,42 +36,41 @@ public class SearchEngine extends Configured implements Tool {
 
     @Override
     public int run(String[] args) throws Exception {
-        if (args.length > 0) {
-            if (args.length < 2) {
-                System.exit(1);
-            } else if (args[0].equals("Indexer")) { // Indexing task
-                boolean isCompleted = runIdf(args[1], "idf_output");
-                if (!isCompleted) {
-                    return 1;
-                }
-                isCompleted = runTfIdf(args[1], "tf_idf_output", "idf_output");
-                if (!isCompleted) {
-                    return 1;
-                }
-            } else if (args[0].equals("Query") && args.length > 2){ // Query task
-                try {
-                    Integer count = Integer.parseInt(args[1]);
-                } catch (NumberFormatException e) {
-                    return 1;
-                }
-                String query = args[2];
-                HashMap<String, Integer> words = countFreqsInQuery(query);
-                String wordsString = hashMapToString(words);
-                boolean isCompleted = runQueryTfIdf(wordsString, "idf_output", "words_tf_idf_output");
-                if (!isCompleted) {
-                    return 1;
-                }
-                isCompleted = runRelevance("words_tf_idf_output", "tf_idf_output", "docs_ratings");
-                if (!isCompleted) {
-                    return 1;
-                }
-            }
-        } else {
+        if (args.length == 0)
             return 1;
+        if (args.length < 2)
+            System.exit(1);
+
+        String taskName = args[0];
+
+        if (taskName.equals("Indexer")) { // Indexing task
+            boolean isCompleted = runIdf(args[1], "idf_output");
+            if (!isCompleted) {
+                return 1;
+            }
+            isCompleted = runTfIdf(args[1], "tf_idf_output", "idf_output");
+            if (!isCompleted) {
+                return 1;
+            }
+        } else if (taskName.equals("Query") && args.length > 2){ // Query task
+            try {
+                Integer count = Integer.parseInt(args[1]);
+            } catch (NumberFormatException e) {
+                return 1;
+            }
+            String query = args[2];
+            HashMap<String, Integer> words = countFreqsInQuery(query);
+            String wordsString = hashMapToString(words);
+            boolean isCompleted = runQueryTfIdf(wordsString, "idf_output", "words_tf_idf_output");
+            if (!isCompleted) {
+                return 1;
+            }
+            isCompleted = runRelevance("words_tf_idf_output", "tf_idf_output", "docs_ratings");
+            if (!isCompleted) {
+                return 1;
+            }
         }
-
         return 0;
-
     }
 
     public boolean runIdf(String inputFolder, String idfOutput) throws
