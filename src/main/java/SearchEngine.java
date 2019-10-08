@@ -8,6 +8,7 @@ import main.java.Indexer.TfIdfMapper;
 import main.java.Query.QueryTfIdfMapper;
 import main.java.Query.QueryTfIdfReducer;
 import main.java.Query.RelevanceMapper;
+import main.java.Query.RelevanceReducer;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -53,8 +54,9 @@ public class SearchEngine extends Configured implements Tool {
                 return 1;
             }
         } else if (taskName.equals("Query") && args.length > 2){ // Query task
+            Integer count = 0;
             try {
-                Integer count = Integer.parseInt(args[1]);
+                count = Integer.parseInt(args[1]);
             } catch (NumberFormatException e) {
                 return 1;
             }
@@ -65,7 +67,7 @@ public class SearchEngine extends Configured implements Tool {
             if (!isCompleted) {
                 return 1;
             }
-            isCompleted = runRelevance("words_tf_idf_output", "tf_idf_output", "docs_ratings");
+            isCompleted = runRelevance("words_tf_idf_output", "tf_idf_output", "docs_ratings", count);
             if (!isCompleted) {
                 return 1;
             }
@@ -155,15 +157,22 @@ public class SearchEngine extends Configured implements Tool {
 
     }
 
-    public boolean runRelevance(String wordsCoeff, String tfIdfInput, String output) throws IOException, ClassNotFoundException, InterruptedException {
+    public boolean runRelevance(String wordsCoeff, String tfIdfInput, String output, Integer count) throws IOException, ClassNotFoundException, InterruptedException {
         Configuration conf = new Configuration();
+        FileSystem fs = FileSystem.get(conf);
+        Path outputPath = new Path(output);
+        if (fs.exists(outputPath)) {
+            fs.delete(outputPath, true);
+        }
         conf.set("query_tf_idf", wordsCoeff);
+        conf.set("count", count.toString());
 
         Job job = Job.getInstance(conf, "Relevance");
 
 //        job.setSortComparatorClass(ReverseComparator.class);
         job.setJarByClass(SearchEngine.class);
         job.setMapperClass(RelevanceMapper.class);
+        job.setReducerClass(RelevanceReducer.class);
 
         job.setOutputKeyClass(DoubleWritable.class);
         job.setOutputValueClass(Text.class);
