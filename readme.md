@@ -7,7 +7,7 @@ ssh istanbul@10.90.138.32
 ```
 ## To see usage
 ```
-/hadoop/bin/hadoop jar search_engine.jar 
+/hadoop/bin/hadoop jar searchEngine.jar 
 ```
 
 ```
@@ -17,9 +17,10 @@ Usage:	Indexer INPUT_FOLDER
 
 Usage:	Query   NUMBER_OF_RESULTS QUERY_TEXT
 		TF_IDF_INPUT_FOLDER is 'tf_idf_output'
-		RESULT_FOLDER is 'result'
+		RESULTS_FOLDER is 'docs_ratings'
 
-Example: /hadoop/bin/hadoop jar search_engine.jar Indexer Dataset/
+Example: /hadoop/bin/hadoop jar searchEngine.jar Indexer Dataset/
+Example: /hadoop/bin/hadoop jar searchEngine.jar Query 10 "Musical Group"
 ```
 
 ## To get file from hdfs:
