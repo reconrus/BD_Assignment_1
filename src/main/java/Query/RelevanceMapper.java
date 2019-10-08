@@ -2,54 +2,57 @@ package main.java.Query;
 
 import java.io.*;
 
-import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.*;
 import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.util.hash.Hash;
 
-public class RelevanceMapper extends Mapper<Text, MapWritable, Text, DoubleWritable> {
+public class RelevanceMapper extends Mapper<Object, Text, Text, DoubleWritable> {
 
-    public void map(Text key, MapWritable value, Context context) throws IOException, InterruptedException {
+    public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
         Configuration conf = context.getConfiguration();
-        HashMap<String, Double> queryWords = wordsInQuery(conf, context);
+
+        HashMap<String, Double> queryWords = wordsInQuery(conf);
 
         double distance = 0D;
-        for (Map.Entry<Writable, Writable> extractData: value.entrySet()) {
-            String word = extractData.getKey().toString();
+        String [] shit = value.toString().split("\t", 2);
+        String docid = shit[0];
+        String temp = shit[1].substring(1, shit[1].length() - 1);
+        String[] words = temp.split(", ");
+        for (String word : words) {
             if (queryWords.containsKey(word)) {
-                Double docIdf = Double.parseDouble(extractData.getValue().toString());
-                distance += queryWords.get(word) * docIdf;
+                String[] arr = word.split("=");
+                String w = arr[0];
+                Double coeff = Double.parseDouble(arr[1]);
+                distance += coeff * queryWords.get(word);
             }
         }
-
-        context.write(key, new DoubleWritable(distance));
-
+        context.write(new Text(docid), new DoubleWritable(-1 * distance));
     }
 
-    private HashMap<String, Double> wordsInQuery(Configuration conf, Context context) throws IOException {
-        FileSystem fs = FileSystem.get(conf);
+    private HashMap<String, Double> wordsInQuery(Configuration conf) throws IOException {
+        FileSystem fileSystem = FileSystem.getLocal(conf);
+        String query = conf.get("query_tf_idf");
 
-        URI[] files= context.getCacheFiles();
-        URI path = files[0];
-
-        InputStream in = fs.open(new Path(path));
-        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-
+        RemoteIterator<LocatedFileStatus> fileStatusListIterator = fileSystem.listFiles(
+                new Path(query), true);
         HashMap<String, Double> result = new HashMap<String, Double>();
-        while (reader.ready()) {
-            String line = reader.readLine().trim();
-            String[] arr = line.split("\t", 2);
-            result.put(arr[0], Double.parseDouble(arr[1]));
+        while (fileStatusListIterator.hasNext()) {
+            //open stream for file
+            FSDataInputStream stream = fileSystem.open(fileStatusListIterator.next().getPath());
+            Scanner scanner = new Scanner(stream);
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine().trim();
+                String[] arr = line.split("\t",2);
+                result.put(arr[0], Double.parseDouble(arr[1].toString()));
+            }
         }
 
         return result;

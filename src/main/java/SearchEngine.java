@@ -3,6 +3,7 @@ package main.java;
 import main.java.Indexer.IdfMapper;
 import main.java.Indexer.IdfReducer;
 import main.java.Indexer.TfIdfMapper;
+//import main.java.ReverseComparator;
 
 import main.java.Query.QueryTfIdfMapper;
 import main.java.Query.QueryTfIdfReducer;
@@ -155,17 +156,15 @@ public class SearchEngine extends Configured implements Tool {
 
     }
 
-    public boolean runRelevance(String words_coeff, String tfIdfInput, String output) throws IOException, ClassNotFoundException, InterruptedException {
+    public boolean runRelevance(String wordsCoeff, String tfIdfInput, String output) throws IOException, ClassNotFoundException, InterruptedException {
         Configuration conf = new Configuration();
+        conf.set("query_tf_idf", wordsCoeff);
 
         Job job = Job.getInstance(conf, "Relevance");
 
-        job.addCacheFile(new Path(words_coeff).toUri());
-
+//        job.setSortComparatorClass(ReverseComparator.class);
         job.setJarByClass(SearchEngine.class);
         job.setMapperClass(RelevanceMapper.class);
-        job.setNumReduceTasks(100);
-
 
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(DoubleWritable.class);
@@ -200,7 +199,6 @@ public class SearchEngine extends Configured implements Tool {
         while (it.hasNext()) {
             HashMap.Entry pair = (HashMap.Entry)it.next();
             result.append(pair.getKey()).append(":").append(pair.getValue().toString()).append(" ");
-            System.out.println(pair.getKey() + " = " + pair.getValue());
             it.remove(); // avoids a ConcurrentModificationException
         }
 
