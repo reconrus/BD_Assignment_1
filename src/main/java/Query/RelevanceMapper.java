@@ -22,9 +22,9 @@ public class RelevanceMapper extends Mapper<Object, Text, Text, DoubleWritable> 
         HashMap<String, Double> queryWords = wordsInQuery(conf);
 
         double distance = 0D;
-        String [] shit = value.toString().split("\t", 2);
-        String docid = shit[0];
-        String temp = shit[1].substring(1, shit[1].length() - 1);
+        String [] separated = value.toString().split("\t", 2);
+        String docid = separated[0];
+        String temp = separated[1].substring(1, separated[1].length() - 1);
         String[] words = temp.split(", ");
         for (String word : words) {
             if (queryWords.containsKey(word)) {
