@@ -13,13 +13,6 @@ public class RelevanceReducer extends Reducer<DoubleWritable, Text, Text, Double
     static int count;
 
     @Override
-    public void setup(Context context)
-    {
-        Configuration conf = context.getConfiguration();
-        count = conf.getInt("count", 10);
-    }
-
-    @Override
     public void reduce(DoubleWritable key, Iterable<Text> values,
                        Context context) throws IOException, InterruptedException
     {
@@ -33,5 +26,12 @@ public class RelevanceReducer extends Reducer<DoubleWritable, Text, Text, Double
             context.write(val, new DoubleWritable(distance));
             count--;
         }
+    }
+    
+    @Override
+    public void setup(Context context)
+    {
+        Configuration conf = context.getConfiguration();
+        count = conf.getInt("count", 10);
     }
 }
