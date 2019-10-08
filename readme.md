@@ -26,3 +26,7 @@ Example: /hadoop/bin/hadoop jar search_engine.jar Indexer Dataset/
 ```
 /hadoop/bin/hdfs dfs -get [path_to_file]
 ```
+## Important command
+```
+mvn clean compile assembly:single
+```
